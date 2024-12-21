@@ -20,10 +20,10 @@ def extract_followers(text):
         # Split the line into possible tokens by delimiters like space, |, &, etc.
         tokens = re.split(r"[\s|&]+", line)
         for token in tokens:
-            # Match valid Twitter handles only
-            match = re.match(r"^@([A-Za-z0-9_]+)$", token)
+            # Clip Twitter handles to valid parts before any invalid delimiter
+            match = re.match(r"^(@[A-Za-z0-9_]+)", token)
             if match:
-                followers.append(token)
+                followers.append(match.group(1))
     return followers
 
 def fix_split_handles(followers):
