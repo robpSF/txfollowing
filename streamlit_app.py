@@ -24,16 +24,23 @@ def scrape_twitter_handles(url):
                 page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
                 page.wait_for_timeout(2000)
 
+            # Debug: Save the full page content
+            content = page.content()
+            with open("debug_output.html", "w", encoding="utf-8") as f:
+                f.write(content)
+
             # Locate the primary container
             timeline = page.locator('div[aria-label="Timeline: Following"]')
             handles = []
 
-            # Extract Twitter handles from the container
+            # Extract Twitter handles
             if timeline.count() > 0:
+                st.write("Timeline Content:")
+                st.write(timeline.inner_html())  # Debug: Log timeline HTML
                 elements = timeline.locator('span').all()
                 for element in elements:
                     text = element.inner_text().strip()
-                    if text.startswith('@') and len(text) > 1:  # Filter valid handles
+                    if text.startswith('@') and len(text) > 1:
                         handles.append(text)
 
             browser.close()
