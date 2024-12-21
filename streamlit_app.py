@@ -18,7 +18,9 @@ def extract_followers(text):
     followers = []
     lines = text.split('\n')
     for line in lines:
-        # Match lines containing @ and filter out noise
+        # Match lines containing @ and filter out email addresses
+        if re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", line):
+            continue  # Skip email addresses
         match = re.search(r"@[A-Za-z0-9_]+", line)
         if match:
             followers.append(match.group())
