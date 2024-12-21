@@ -61,12 +61,16 @@ if st.button("Go"):
             all_followers.extend(followers)
 
         if all_followers:
+            # Remove duplicates
+            unique_followers = list(set(all_followers))
+            unique_followers.sort()
+
             st.write("### Extracted Followers:")
-            for idx, follower in enumerate(all_followers, 1):
+            for idx, follower in enumerate(unique_followers, 1):
                 st.write(f"{idx}. {follower}")
 
             # Save all followers to a file
-            file_name = save_to_file(all_followers)
+            file_name = save_to_file(unique_followers)
             with open(file_name, "rb") as file:
                 st.download_button(
                     label="Download Followers as Text File",
