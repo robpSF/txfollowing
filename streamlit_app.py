@@ -20,7 +20,8 @@ def scrape_twitter_handles(url):
     try:
         ensure_playwright_browsers()
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)  # Use headless=False for debugging
+            # Launch the browser in headless mode
+            browser = p.chromium.launch(headless=True)
             page = browser.new_page()
 
             # Navigate to the page
