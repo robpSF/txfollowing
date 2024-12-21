@@ -3,9 +3,6 @@ from PIL import Image, ImageEnhance
 import pytesseract
 import re
 
-# Set Tesseract path (adjust the path to your system)
-pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"  # Example for Linux/Ubuntu
-
 def preprocess_image(image):
     """Preprocess the image to improve OCR accuracy."""
     # Convert image to grayscale
@@ -25,6 +22,14 @@ def extract_followers(text):
         if match:
             followers.append(match.group())
     return followers
+
+def save_to_file(followers):
+    """Save the list of followers to a text file."""
+    file_name = "extracted_followers.txt"
+    with open(file_name, "w") as f:
+        for follower in followers:
+            f.write(follower + "\n")
+    return file_name
 
 # Streamlit App
 st.title("Image Follower Extractor")
@@ -53,6 +58,16 @@ if uploaded_file is not None:
         st.write("### Extracted Followers:")
         for idx, follower in enumerate(followers, 1):
             st.write(f"{idx}. {follower}")
+
+        # Save followers to a file
+        file_name = save_to_file(followers)
+        with open(file_name, "rb") as file:
+            btn = st.download_button(
+                label="Download Followers as Text File",
+                data=file,
+                file_name="extracted_followers.txt",
+                mime="text/plain"
+            )
     else:
         st.write("No followers found in the image.")
 
