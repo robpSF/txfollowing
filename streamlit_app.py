@@ -37,7 +37,7 @@ if uploaded_file is not None:
 
     if followers:
         st.write("### Extracted Followers:")
-        followers_list = "\n".join(followers)
+        followers_list = " ".join(followers)
         st.text_area("Copy-paste the list below:", followers_list, height=200)
 
         # Provide a download option
