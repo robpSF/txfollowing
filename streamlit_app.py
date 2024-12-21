@@ -17,9 +17,9 @@ def extract_followers(text):
     followers = []
     lines = text.split('\n')
     for line in lines:
-        # Match valid Twitter handles while excluding email-like patterns
-        matches = re.findall(r"@([A-Za-z0-9_]+)(?!\.\w+)", line)
-        followers.extend(f"@{match}" for match in matches)
+        # Match all @handles using re.findall but exclude email addresses
+        matches = re.findall(r"(?<!\S)@[A-Za-z0-9_]+(?!\S)", line)  # Ensures no preceding or trailing non-whitespace
+        followers.extend(matches)
     return followers
 
 def fix_split_handles(followers):
@@ -32,15 +32,23 @@ def fix_split_handles(followers):
             skip_next = False
             continue
 
-        # If the current handle is incomplete (e.g., ends with '@Lowkey' and next is '0nline')
-        if i + 1 < len(followers) and not followers[i + 1].startswith('@') and re.match(r"^[A-Za-z0-9_]+$", followers[i + 1]):
-            combined = follower + followers[i + 1]
-            fixed_followers.append(combined)
-            skip_next = True  # Skip the next element as it's already merged
+        # Check if the current handle is followed by noise or a continuation
+        if i + 1 < len(followers):
+            # If the next part is not a valid standalone handle but looks like a continuation
+            next_part = followers[i + 1]
+            if not next_part.startswith('@') and re.match(r"^[A-Za-z0-9_]+$", next_part):
+                combined = follower + next_part
+                fixed_followers.append(combined)
+                skip_next = True  # Skip the next part since it's merged
+            else:
+                fixed_followers.append(follower)
         else:
             fixed_followers.append(follower)
 
-    return fixed_followers
+    # Additional filtering for handles that accidentally merged with text
+    filtered_followers = [handle for handle in fixed_followers if re.match(r"^@[A-Za-z0-9_]+$", handle)]
+
+    return filtered_followers
 
 def save_to_file(followers):
     """Save the list of followers to a text file."""
