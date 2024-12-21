@@ -27,8 +27,8 @@ def extract_followers(text):
         if matches:
             followers.extend(matches)  # Add all matches in the line
 
-    # Filter out one-letter handles, @gmailcom, and handles ending with bskysocial
-    followers = [handle for handle in followers if len(handle) > 2 and handle.lower() != "@gmailcom" and not handle.lower().endswith("bskysocial")]
+    # Filter out handles less than 4 characters, @gmailcom, and handles ending with bskysocial
+    followers = [handle for handle in followers if len(handle) >= 4 and handle.lower() != "@gmailcom" and not handle.lower().endswith("bskysocial")]
     return followers
 
 def save_to_file(followers):
