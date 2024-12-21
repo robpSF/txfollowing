@@ -18,13 +18,17 @@ def extract_followers(text):
     followers = []
     lines = text.split('\n')
     for line in lines:
-        # Match lines containing @ and filter out email addresses
-        if re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", line):
+        # Skip email addresses explicitly
+        if re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", line.strip()):
             continue  # Skip email addresses
-        match = re.search(r"(?<=\s|^)@[A-Za-z0-9_]+(?=\s|$)", line)  # Ensure @handle is standalone
+
+        # Match valid Twitter handles
+        match = re.findall(r"(^|\s)@[A-Za-z0-9_]+", line)  # Matches handles at the start or after a space
         if match:
-            followers.append(match.group())
+            # Clean up and add the handle (remove leading whitespace)
+            followers.extend(handle.strip() for handle in match)
     return followers
+
 
 def save_to_file(followers):
     """Save the list of followers to a text file."""
