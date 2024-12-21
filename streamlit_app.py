@@ -20,30 +20,22 @@ def extract_followers(text):
         # Match all @handles using re.findall to capture multiple occurrences in one line
         matches = re.findall(r"@[A-Za-z0-9_]+", line)
         followers.extend(matches)
-    return clean_followers(followers)
-
-def clean_followers(followers):
-    """Clean misinterpreted followers (e.g., replace misrecognized @0nline as @Online)."""
-    cleaned = []
-    for follower in followers:
-        # Replace common misinterpretations
-        corrected_follower = re.sub(r"@0", "@", follower)  # Correct misinterpreted @0
-        cleaned.append(corrected_follower)
-    return cleaned
+    return followers
 
 def fix_split_handles(followers):
     """Fix split handles by intelligently merging parts based on patterns."""
     fixed_followers = []
     i = 0
     while i < len(followers):
-        if i + 1 < len(followers) and not followers[i + 1].startswith('@'):
-            # Merge current handle with the next part if it looks like a split handle
-            combined = followers[i] + followers[i + 1]
-            fixed_followers.append(combined)
-            i += 2  # Skip the next part as it's merged
-        else:
-            fixed_followers.append(followers[i])
-            i += 1
+        if i + 1 < len(followers) and followers[i + 1].startswith('@'):
+            # Check if merging current and next creates a valid handle
+            combined = followers[i] + followers[i + 1][1:]  # Remove '@' from the next part
+            if re.match(r"@[A-Za-z0-9_]+", combined):
+                fixed_followers.append(combined)
+                i += 2  # Skip the next part as it's merged
+                continue
+        fixed_followers.append(followers[i])
+        i += 1
     return fixed_followers
 
 def save_to_file(followers):
