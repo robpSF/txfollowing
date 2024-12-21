@@ -26,6 +26,9 @@ def extract_followers(text):
         matches = re.findall(r"@(?:[A-Za-z0-9_]+)", line)  # Handles starting with @
         if matches:
             followers.extend(matches)  # Add all matches in the line
+
+    # Filter out one-letter handles and @gmailcom
+    followers = [handle for handle in followers if len(handle) > 2 and handle.lower() != "@gmailcom"]
     return followers
 
 def save_to_file(followers):
