@@ -1,41 +1,45 @@
 import streamlit as st
-import requests
-from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
-# Function to scrape Twitter handles
+# Function to scrape Twitter handles using Playwright
 def scrape_twitter_handles(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    }
-    
     try:
-        # Fetch the page content
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+        with sync_playwright() as p:
+            # Launch a headless browser
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
 
-        # Parse the HTML content
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Extract handles from the page
-        handles = []
-        for span in soup.find_all('span'):
-            text = span.get_text()
-            if text.startswith('@'):
-                handles.append(text)
-        
-        return handles
+            # Navigate to the Twitter page
+            page.goto(url)
+            page.wait_for_timeout(5000)  # Wait for the page to load
 
-    except requests.exceptions.RequestException as e:
-        return [f"Error fetching data: {e}"]
+            # Scroll down multiple times to load all content
+            for _ in range(5):
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
+                page.wait_for_timeout(2000)
+
+            # Extract Twitter handles from the page
+            content = page.content()
+            handles = []
+            for line in content.splitlines():
+                if '@' in line:
+                    start = line.find('@')
+                    end = line.find(' ', start)
+                    handles.append(line[start:end] if end != -1 else line[start:])
+
+            browser.close()
+            return list(set(handles))  # Remove duplicates
+    except Exception as e:
+        return [f"Error: {e}"]
 
 # Streamlit app
 def main():
-    st.title("Twitter Following Scraper (BeautifulSoup)")
+    st.title("Twitter Following Scraper (Playwright)")
     st.write("Enter the URL of the Twitter following page to extract handles.")
-    
+
     # Input URL
     url = st.text_input("Twitter Following Page URL:", placeholder="https://x.com/username/following")
-    
+
     if st.button("Scrape Handles"):
         if url:
             st.write("Scraping handles...")
@@ -45,7 +49,7 @@ def main():
                 for handle in handles:
                     st.write(handle)
             else:
-                st.write("No handles found.")
+                st.write("No handles found or an error occurred.")
         else:
             st.write("Please enter a valid URL.")
 
