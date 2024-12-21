@@ -17,11 +17,13 @@ def extract_followers(text):
     followers = []
     lines = text.split('\n')
     for line in lines:
-        # Match all @handles using re.findall but exclude email addresses
-        matches = re.findall(r"@([A-Za-z0-9_]+)", line)  # Ensures only valid handles are extracted
-        for match in matches:
-            if not re.search(r"[^A-Za-z0-9_@]", match):  # Exclude if invalid characters like & are part of the match
-                followers.append(f"@{match}")
+        # Split the line into possible tokens by delimiters like space, |, &, etc.
+        tokens = re.split(r"[\s|&]+", line)
+        for token in tokens:
+            # Match valid Twitter handles only
+            match = re.match(r"^@([A-Za-z0-9_]+)$", token)
+            if match:
+                followers.append(token)
     return followers
 
 def fix_split_handles(followers):
