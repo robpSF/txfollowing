@@ -24,8 +24,17 @@ def scrape_twitter_handles(url):
                 page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
                 page.wait_for_timeout(2000)
 
-            # Extract handles using Playwright's DOM querying
-            handles = page.locator("span:has-text('@')").all_inner_texts()
+            # Locate the primary container
+            timeline = page.locator('div[aria-label="Timeline: Following"]')
+            handles = []
+
+            # Extract Twitter handles from the container
+            if timeline.count() > 0:
+                elements = timeline.locator('span').all()
+                for element in elements:
+                    text = element.inner_text().strip()
+                    if text.startswith('@') and len(text) > 1:  # Filter valid handles
+                        handles.append(text)
 
             browser.close()
             return list(set(handles))  # Remove duplicates
