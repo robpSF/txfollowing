@@ -25,17 +25,21 @@ def extract_followers(text):
 def fix_split_handles(followers):
     """Fix split handles by intelligently merging parts based on patterns."""
     fixed_followers = []
-    i = 0
-    while i < len(followers):
-        if i + 1 < len(followers) and followers[i + 1].startswith('@'):
-            # Check if merging current and next creates a valid handle
-            combined = followers[i] + followers[i + 1][1:]  # Remove '@' from the next part
-            if re.match(r"@[A-Za-z0-9_]+", combined):
-                fixed_followers.append(combined)
-                i += 2  # Skip the next part as it's merged
-                continue
-        fixed_followers.append(followers[i])
-        i += 1
+    skip_next = False
+
+    for i, follower in enumerate(followers):
+        if skip_next:
+            skip_next = False
+            continue
+
+        # If the current handle is incomplete (e.g., ends with '@Lowkey' and next is '0nline')
+        if i + 1 < len(followers) and not followers[i + 1].startswith('@') and re.match(r"^[A-Za-z0-9_]+$", followers[i + 1]):
+            combined = follower + followers[i + 1]
+            fixed_followers.append(combined)
+            skip_next = True  # Skip the next element as it's already merged
+        else:
+            fixed_followers.append(follower)
+
     return fixed_followers
 
 def save_to_file(followers):
@@ -67,9 +71,10 @@ if st.button("Go"):
             # Preprocess the image
             preprocessed_image = preprocess_image(image)
 
-            # Perform OCR
+            # Perform OCR with whitelist configuration
             st.write(f"Extracting text from {uploaded_file.name}...")
-            extracted_text = pytesseract.image_to_string(preprocessed_image)
+            custom_config = r"--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@"
+            extracted_text = pytesseract.image_to_string(preprocessed_image, config=custom_config)
 
             # Extract followers
             followers = extract_followers(extracted_text)
