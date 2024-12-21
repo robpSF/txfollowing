@@ -25,17 +25,21 @@ def extract_followers(text):
 def fix_split_handles(followers):
     """Fix split handles by intelligently merging parts based on patterns."""
     fixed_followers = []
-    i = 0
-    while i < len(followers):
-        if i + 1 < len(followers):
-            # Check if the next part is likely a continuation of the current handle
-            if not followers[i + 1].startswith('@') and re.match(r"^[A-Za-z0-9_]+$", followers[i + 1]):
-                combined = followers[i] + followers[i + 1]
-                fixed_followers.append(combined)
-                i += 2  # Skip the next part as it's merged
-                continue
-        fixed_followers.append(followers[i])
-        i += 1
+    skip_next = False
+
+    for i, follower in enumerate(followers):
+        if skip_next:
+            skip_next = False
+            continue
+
+        # If the current handle is incomplete (e.g., ends with '@Lowkey' and next is '0nline')
+        if i + 1 < len(followers) and not followers[i + 1].startswith('@') and re.match(r"^[A-Za-z0-9_]+$", followers[i + 1]):
+            combined = follower + followers[i + 1]
+            fixed_followers.append(combined)
+            skip_next = True  # Skip the next element as it's already merged
+        else:
+            fixed_followers.append(follower)
+
     return fixed_followers
 
 def save_to_file(followers):
