@@ -1,9 +1,15 @@
 import streamlit as st
 from playwright.sync_api import sync_playwright
+import os
+
+# Ensure Playwright browsers are installed
+def ensure_playwright_browsers():
+    os.system("playwright install chromium")
 
 # Function to scrape Twitter handles using Playwright
 def scrape_twitter_handles(url):
     try:
+        ensure_playwright_browsers()  # Ensure browsers are installed
         with sync_playwright() as p:
             # Launch a headless browser
             browser = p.chromium.launch(headless=True)
