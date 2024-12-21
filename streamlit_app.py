@@ -2,6 +2,7 @@ import streamlit as st
 from PIL import Image, ImageEnhance
 import pytesseract
 import re
+from difflib import get_close_matches
 
 def preprocess_image(image):
     """Preprocess the image to improve OCR accuracy."""
@@ -17,42 +18,11 @@ def extract_followers(text):
     followers = []
     lines = text.split('\n')
     for line in lines:
-        # Split the line into possible tokens by delimiters like space, |, &, etc.
-        tokens = re.split(r"[\s|&]+", line)
-        for token in tokens:
-            # Clip Twitter handles to valid parts before any invalid delimiter
-            match = re.match(r"^(@[A-Za-z0-9_]+)", token)
-            if match:
-                followers.append(match.group(1))
+        # Match lines containing @ and filter out noise
+        match = re.search(r"@[A-Za-z0-9_]+", line)
+        if match:
+            followers.append(match.group())
     return followers
-
-def fix_split_handles(followers):
-    """Fix split handles by intelligently merging parts based on patterns."""
-    fixed_followers = []
-    skip_next = False
-
-    for i, follower in enumerate(followers):
-        if skip_next:
-            skip_next = False
-            continue
-
-        # Check if the current handle is followed by noise or a continuation
-        if i + 1 < len(followers):
-            # If the next part is not a valid standalone handle but looks like a continuation
-            next_part = followers[i + 1]
-            if not next_part.startswith('@') and re.match(r"^[A-Za-z0-9_]+$", next_part):
-                combined = follower + next_part
-                fixed_followers.append(combined)
-                skip_next = True  # Skip the next part since it's merged
-            else:
-                fixed_followers.append(follower)
-        else:
-            fixed_followers.append(follower)
-
-    # Additional filtering for handles that accidentally merged with text
-    filtered_followers = [handle for handle in fixed_followers if re.match(r"^@[A-Za-z0-9_]+$", handle)]
-
-    return filtered_followers
 
 def save_to_file(followers):
     """Save the list of followers to a text file."""
@@ -62,10 +32,24 @@ def save_to_file(followers):
             f.write(follower + "\n")
     return file_name
 
+def correct_text(extracted, known_handles):
+    """Correct misinterpreted text using known handles."""
+    corrected = []
+    for handle in extracted:
+        matches = get_close_matches(handle, known_handles, n=1, cutoff=0.8)
+        if matches:
+            corrected.append(matches[0])
+        else:
+            corrected.append(handle)
+    return corrected
+
 # Streamlit App
 st.title("Image Follower Extractor")
 
 st.write("Upload images containing follower information, and this app will extract it for you.")
+
+# Known handles for correction (this could be dynamic)
+known_handles = ["@Lowkey0nline", "@ExampleHandle", "@AnotherExample"]
 
 # Multi-file uploader
 uploaded_files = st.file_uploader("Choose image files", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
@@ -97,15 +81,15 @@ if st.button("Go"):
             unique_followers = list(set(all_followers))
             unique_followers.sort()
 
-            # Fix split handles
-            fixed_followers = fix_split_handles(unique_followers)
+            # Correct text using known handles
+            corrected_followers = correct_text(unique_followers, known_handles)
 
             st.write("### Extracted Followers:")
-            for idx, follower in enumerate(fixed_followers, 1):
+            for idx, follower in enumerate(corrected_followers, 1):
                 st.write(f"{idx}. {follower}")
 
             # Save all followers to a file
-            file_name = save_to_file(fixed_followers)
+            file_name = save_to_file(corrected_followers)
             with open(file_name, "rb") as file:
                 st.download_button(
                     label="Download Followers as Text File",
