@@ -18,10 +18,22 @@ def extract_followers(text):
     lines = text.split('\n')
     for line in lines:
         # Match lines containing @ and filter out noise
-        match = re.search(r"@[A-Za-z0-9_]+", line)
+        match = re.findall(r"@[A-Za-z0-9_]+", line)
         if match:
-            followers.append(match.group())
+            followers.extend(match)
     return followers
+
+def fix_split_handles(followers):
+    """Post-process followers to fix split handles."""
+    fixed_followers = []
+    for i, follower in enumerate(followers):
+        if i + 1 < len(followers) and not followers[i + 1].startswith('@'):
+            # Combine current handle with next part if split
+            combined = follower + followers[i + 1]
+            fixed_followers.append(combined)
+        elif follower.startswith('@'):
+            fixed_followers.append(follower)
+    return fixed_followers
 
 def save_to_file(followers):
     """Save the list of followers to a text file."""
@@ -52,9 +64,10 @@ if st.button("Go"):
             # Preprocess the image
             preprocessed_image = preprocess_image(image)
 
-            # Perform OCR
+            # Perform OCR with specific config
             st.write(f"Extracting text from {uploaded_file.name}...")
-            extracted_text = pytesseract.image_to_string(preprocessed_image)
+            custom_config = r"--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@"
+            extracted_text = pytesseract.image_to_string(preprocessed_image, config=custom_config)
 
             # Extract followers
             followers = extract_followers(extracted_text)
@@ -65,12 +78,15 @@ if st.button("Go"):
             unique_followers = list(set(all_followers))
             unique_followers.sort()
 
+            # Fix split handles
+            fixed_followers = fix_split_handles(unique_followers)
+
             st.write("### Extracted Followers:")
-            for idx, follower in enumerate(unique_followers, 1):
+            for idx, follower in enumerate(fixed_followers, 1):
                 st.write(f"{idx}. {follower}")
 
             # Save all followers to a file
-            file_name = save_to_file(unique_followers)
+            file_name = save_to_file(fixed_followers)
             with open(file_name, "rb") as file:
                 st.download_button(
                     label="Download Followers as Text File",
