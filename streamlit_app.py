@@ -17,8 +17,8 @@ def extract_followers(text):
     followers = []
     lines = text.split('\n')
     for line in lines:
-        # Match all @handles using re.findall to capture multiple occurrences in one line
-        matches = re.findall(r"@[A-Za-z0-9_]+", line)
+        # Match all @handles using re.findall but exclude email addresses
+        matches = re.findall(r"(?<!\S)@[A-Za-z0-9_]+(?!\S)", line)  # Ensures no preceding or trailing non-whitespace
         followers.extend(matches)
     return followers
 
