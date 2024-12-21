@@ -27,14 +27,15 @@ def fix_split_handles(followers):
     fixed_followers = []
     i = 0
     while i < len(followers):
-        if i + 1 < len(followers) and not followers[i + 1].startswith('@'):
-            # Merge current handle with the next part if it looks like a split handle
-            combined = followers[i] + followers[i + 1]
-            fixed_followers.append(combined)
-            i += 2  # Skip the next part as it's merged
-        else:
-            fixed_followers.append(followers[i])
-            i += 1
+        if i + 1 < len(followers):
+            # Check if the next part is likely a continuation of the current handle
+            if not followers[i + 1].startswith('@') and re.match(r"^[A-Za-z0-9_]+$", followers[i + 1]):
+                combined = followers[i] + followers[i + 1]
+                fixed_followers.append(combined)
+                i += 2  # Skip the next part as it's merged
+                continue
+        fixed_followers.append(followers[i])
+        i += 1
     return fixed_followers
 
 def save_to_file(followers):
@@ -66,9 +67,10 @@ if st.button("Go"):
             # Preprocess the image
             preprocessed_image = preprocess_image(image)
 
-            # Perform OCR
+            # Perform OCR with whitelist configuration
             st.write(f"Extracting text from {uploaded_file.name}...")
-            extracted_text = pytesseract.image_to_string(preprocessed_image)
+            custom_config = r"--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@"
+            extracted_text = pytesseract.image_to_string(preprocessed_image, config=custom_config)
 
             # Extract followers
             followers = extract_followers(extracted_text)
