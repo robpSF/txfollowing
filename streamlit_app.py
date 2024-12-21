@@ -3,6 +3,9 @@ from PIL import Image
 import pytesseract
 import re
 
+# Set Tesseract path (adjust the path to your system)
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"  # Example for Linux/Ubuntu
+
 def extract_followers(text):
     """Extract follower information from the text."""
     followers = []
