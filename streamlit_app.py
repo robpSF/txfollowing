@@ -17,9 +17,9 @@ def extract_followers(text):
     followers = []
     lines = text.split('\n')
     for line in lines:
-        # Match all @handles using re.findall but exclude email addresses
-        matches = re.findall(r"(?<!\S)@[A-Za-z0-9_]+(?!\S)", line)  # Ensures no preceding or trailing non-whitespace
-        followers.extend(matches)
+        # Match valid Twitter handles while excluding email-like patterns
+        matches = re.findall(r"@([A-Za-z0-9_]+)(?!\.\w+)", line)
+        followers.extend(f"@{match}" for match in matches)
     return followers
 
 def fix_split_handles(followers):
