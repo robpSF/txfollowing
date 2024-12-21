@@ -17,22 +17,24 @@ def extract_followers(text):
     followers = []
     lines = text.split('\n')
     for line in lines:
-        # Match lines containing @ and filter out noise
-        match = re.findall(r"@[A-Za-z0-9_]+", line)
-        if match:
-            followers.extend(match)
+        # Match all @handles using re.findall to capture multiple occurrences in one line
+        matches = re.findall(r"@[A-Za-z0-9_]+", line)
+        followers.extend(matches)
     return followers
 
 def fix_split_handles(followers):
-    """Post-process followers to fix split handles."""
+    """Fix split handles by intelligently merging parts based on patterns."""
     fixed_followers = []
-    for i, follower in enumerate(followers):
+    i = 0
+    while i < len(followers):
         if i + 1 < len(followers) and not followers[i + 1].startswith('@'):
-            # Combine current handle with next part if split
-            combined = follower + followers[i + 1]
+            # Merge current handle with the next part if it looks like a split handle
+            combined = followers[i] + followers[i + 1]
             fixed_followers.append(combined)
-        elif follower.startswith('@'):
-            fixed_followers.append(follower)
+            i += 2  # Skip the next part as it's merged
+        else:
+            fixed_followers.append(followers[i])
+            i += 1
     return fixed_followers
 
 def save_to_file(followers):
@@ -64,10 +66,9 @@ if st.button("Go"):
             # Preprocess the image
             preprocessed_image = preprocess_image(image)
 
-            # Perform OCR with specific config
+            # Perform OCR
             st.write(f"Extracting text from {uploaded_file.name}...")
-            custom_config = r"--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@"
-            extracted_text = pytesseract.image_to_string(preprocessed_image, config=custom_config)
+            extracted_text = pytesseract.image_to_string(preprocessed_image)
 
             # Extract followers
             followers = extract_followers(extracted_text)
