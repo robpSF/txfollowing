@@ -13,6 +13,13 @@ def preprocess_image(image):
     image = enhancer.enhance(2.0)
     return image
 
+def preprocess_text(ocr_text):
+    """Clean and normalize the OCR text before extraction."""
+    # Remove excessive spaces and normalize newlines
+    ocr_text = re.sub(r'\s+', ' ', ocr_text)  # Replace multiple spaces with a single space
+    ocr_text = re.sub(r'\n+', '\n', ocr_text)  # Normalize multiple newlines to a single newline
+    return ocr_text
+
 def extract_followers(text):
     """Extract follower information from the text."""
     followers = []
@@ -21,14 +28,12 @@ def extract_followers(text):
         # Skip email addresses explicitly
         if re.search(r"[^@\s]+@[^@\s]+\.[^@\s]+", line):
             continue  # Skip email addresses
-
+        
         # Match valid Twitter handles (handles that start with @)
         matches = re.findall(r"(?<!\S)@[A-Za-z0-9_]+", line)  # Handles at word boundaries
         if matches:
             followers.extend(matches)  # Add all matches in the line
     return followers
-
-
 
 def save_to_file(followers):
     """Save the list of followers to a text file."""
@@ -76,10 +81,15 @@ if st.button("Go"):
             # Perform OCR with whitelist configuration
             st.write(f"Extracting text from {uploaded_file.name}...")
             custom_config = r"--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@"
-            extracted_text = pytesseract.image_to_string(preprocessed_image, config=custom_config)
+            raw_text = pytesseract.image_to_string(preprocessed_image, config=custom_config)
+
+            # Normalize the OCR text
+            normalized_text = preprocess_text(raw_text)
+            st.write(f"Raw OCR Output:\n{raw_text}")  # Debug: Display raw OCR output
+            st.write(f"Normalized Text:\n{normalized_text}")  # Debug: Display normalized text
 
             # Extract followers
-            followers = extract_followers(extracted_text)
+            followers = extract_followers(normalized_text)
             all_followers.extend(followers)
 
         if all_followers:
