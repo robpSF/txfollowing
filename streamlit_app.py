@@ -2,28 +2,40 @@ import streamlit as st
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 import chromedriver_autoinstaller
+import os
 import time
 
-# Function to scrape Twitter handles
-def get_following_handles(url):
-    # Automatically download and install the correct version of ChromeDriver
+# Function to set up Selenium with Chrome
+def setup_driver():
+    # Automatically download the correct ChromeDriver version
     chromedriver_autoinstaller.install()
 
-    # Set up Chrome options
+    # Download Google Chrome binary
+    chrome_path = "/tmp/google-chrome"
+    if not os.path.exists(chrome_path):
+        os.system(
+            "wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/google-chrome.deb"
+        )
+        os.system("dpkg -x /tmp/google-chrome.deb /tmp/google-chrome")
+        os.system("rm /tmp/google-chrome.deb")
+
+    # Configure Selenium options
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.binary_location = "/usr/bin/chromium-browser"  # Path to Chromium in Streamlit Cloud
+    chrome_options.binary_location = "/tmp/google-chrome/opt/google/chrome/google-chrome"
 
-    # Start WebDriver with the configured options
-    service = Service("/usr/bin/chromedriver")  # Path to ChromeDriver
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    # Set up WebDriver
+    driver = webdriver.Chrome(options=chrome_options)
+    return driver
 
+# Function to scrape Twitter handles
+def get_following_handles(url):
     try:
+        driver = setup_driver()
+
         # Open the Twitter following page
         driver.get(url)
 
@@ -32,11 +44,11 @@ def get_following_handles(url):
 
         # Scroll down to load more accounts (adjust range as needed)
         for _ in range(5):
-            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.END)
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(2)
 
         # Extract Twitter handles
-        elements = driver.find_elements(By.CSS_SELECTOR, "div[dir='ltr'] > span")
+        elements = driver.find_elements("xpath", "//div[@dir='ltr']/span")
         handles = [el.text for el in elements if el.text.startswith('@')]
 
         return handles
