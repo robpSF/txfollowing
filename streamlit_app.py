@@ -18,8 +18,10 @@ def extract_followers(text):
     lines = text.split('\n')
     for line in lines:
         # Match all @handles using re.findall but exclude email addresses
-        matches = re.findall(r"(?<!\S)@[A-Za-z0-9_]+(?!\S)", line)  # Ensures no preceding or trailing non-whitespace
-        followers.extend(matches)
+        matches = re.findall(r"@([A-Za-z0-9_]+)", line)  # Ensures only valid handles are extracted
+        for match in matches:
+            if not re.search(r"[^A-Za-z0-9_@]", match):  # Exclude if invalid characters like & are part of the match
+                followers.append(f"@{match}")
     return followers
 
 def fix_split_handles(followers):
