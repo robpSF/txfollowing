@@ -34,41 +34,49 @@ def save_to_file(followers):
 # Streamlit App
 st.title("Image Follower Extractor")
 
-st.write("Upload an image containing follower information, and this app will extract it for you.")
+st.write("Upload images containing follower information, and this app will extract it for you.")
 
-# Upload image
-uploaded_file = st.file_uploader("Choose an image file", type=["jpg", "jpeg", "png"])
+# Multi-file uploader
+uploaded_files = st.file_uploader("Choose image files", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-if uploaded_file is not None:
-    # Display uploaded image
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+# Button to trigger extraction
+if st.button("Go"):
+    all_followers = []
 
-    # Preprocess the image
-    preprocessed_image = preprocess_image(image)
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            # Open and display each image
+            image = Image.open(uploaded_file)
+            st.image(image, caption=f"Uploaded Image: {uploaded_file.name}", use_column_width=True)
 
-    # Perform OCR
-    st.write("Extracting text from the image...")
-    extracted_text = pytesseract.image_to_string(preprocessed_image)
+            # Preprocess the image
+            preprocessed_image = preprocess_image(image)
 
-    # Extract followers
-    followers = extract_followers(extracted_text)
+            # Perform OCR
+            st.write(f"Extracting text from {uploaded_file.name}...")
+            extracted_text = pytesseract.image_to_string(preprocessed_image)
 
-    if followers:
-        st.write("### Extracted Followers:")
-        for idx, follower in enumerate(followers, 1):
-            st.write(f"{idx}. {follower}")
+            # Extract followers
+            followers = extract_followers(extracted_text)
+            all_followers.extend(followers)
 
-        # Save followers to a file
-        file_name = save_to_file(followers)
-        with open(file_name, "rb") as file:
-            btn = st.download_button(
-                label="Download Followers as Text File",
-                data=file,
-                file_name="extracted_followers.txt",
-                mime="text/plain"
-            )
+        if all_followers:
+            st.write("### Extracted Followers:")
+            for idx, follower in enumerate(all_followers, 1):
+                st.write(f"{idx}. {follower}")
+
+            # Save all followers to a file
+            file_name = save_to_file(all_followers)
+            with open(file_name, "rb") as file:
+                st.download_button(
+                    label="Download Followers as Text File",
+                    data=file,
+                    file_name="extracted_followers.txt",
+                    mime="text/plain"
+                )
+        else:
+            st.write("No followers found in the uploaded images.")
     else:
-        st.write("No followers found in the image.")
+        st.write("Please upload at least one image.")
 
 st.write("\n---\nDeveloped with ❤️ using Streamlit")
