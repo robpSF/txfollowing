@@ -1,10 +1,19 @@
 import streamlit as st
 from playwright.sync_api import sync_playwright
 import os
+import base64
 
 # Ensure Playwright browsers are installed
 def ensure_playwright_browsers():
     os.system("playwright install chromium")
+
+# Function to create a download link for debug HTML
+def create_download_link(file_path, file_name):
+    with open(file_path, "rb") as file:
+        data = file.read()
+        b64 = base64.b64encode(data).decode()
+        href = f'<a href="data:text/html;base64,{b64}" download="{file_name}">Download debug_output.html</a>'
+        return href
 
 # Function to scrape Twitter handles using Playwright
 def scrape_twitter_handles(url):
@@ -66,6 +75,16 @@ def main():
                     st.write(handle)
             else:
                 st.write("No handles found or an error occurred.")
+
+            # Provide debug HTML content
+            st.write("Debug Output (HTML Content):")
+            with open("debug_output.html", "r", encoding="utf-8") as f:
+                debug_content = f.read()
+                st.text_area("HTML Content", debug_content, height=500)
+
+            # Provide a download link for the debug file
+            st.write("Download the debug HTML file:")
+            st.markdown(create_download_link("debug_output.html", "debug_output.html"), unsafe_allow_html=True)
         else:
             st.write("Please enter a valid URL.")
 
