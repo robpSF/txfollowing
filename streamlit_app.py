@@ -80,6 +80,8 @@ if st.button("Go"):
             custom_config = r"--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@"
             extracted_text = pytesseract.image_to_string(preprocessed_image, config=custom_config)
 
+            st.write(extracted_text)
+
             # Extract followers
             followers = extract_followers(extracted_text)
             all_followers.extend(followers)
