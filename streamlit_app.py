@@ -1,3 +1,9 @@
+import streamlit as st
+from PIL import Image, ImageEnhance
+import pytesseract
+import re
+from difflib import get_close_matches
+
 # Streamlit App Updates
 st.title("Image Follower Extractor")
 
