@@ -1,51 +1,19 @@
-def preprocess_text(ocr_text):
-    """Clean and reconstruct the OCR text."""
-    # Remove excessive whitespace
-    cleaned_text = re.sub(r'\s+', ' ', ocr_text).strip()
-    # Split into logical lines by punctuation or excessive spacing
-    logical_lines = re.split(r'(?<=[.!?]) +', cleaned_text)
-    return logical_lines
-
-def extract_followers(text_lines):
-    """Extract follower information from cleaned text lines."""
-    followers = []
-    debug_lines = []  # Collect lines for debugging
-
-    for line in text_lines:
-        # Add current line to debugging
-        debug_lines.append(f"Processing line: {line}")
-
-        # Skip email addresses explicitly
-        if re.search(r"[^@\\s]+@[^@\\s]+\\.[^@\\s]+", line):
-            continue  # Skip email addresses
-
-        # Match valid Twitter handles
-        matches = re.findall(r"@(?:[A-Za-z0-9_]+)", line)  # Handles starting with @
-        if matches:
-            debug_lines.append(f"Raw matches: {matches}")  # Debug: Show raw matches
-            followers.extend(matches)  # Add all matches in the line
-
-    # Filter out handles less than 4 characters, @gmailcom, and handles ending with bskysocial
-    followers = [
-        handle for handle in followers
-        if len(handle) >= 4
-        and handle.lower() != "@gmailcom"
-        and not handle.lower().endswith("bskysocial")
-    ]
-    debug_lines.append(f"Filtered followers: {followers}")  # Debug: Show filtered results
-
-    # Display debugging information in Streamlit
-    st.write("### Debugging Information")
-    for debug_line in debug_lines:
-        st.write(debug_line)
-
-    return followers
-
 # Streamlit App Updates
-if st.button("Go"):
-    all_followers = []
+st.title("Image Follower Extractor")
 
-    if uploaded_files:
+st.write("Upload images containing follower information, and this app will extract it for you.")
+
+# Known handles for correction (this could be dynamic)
+known_handles = ["@Lowkey0nline", "@ExampleHandle", "@AnotherExample"]
+
+# Multi-file uploader
+uploaded_files = st.file_uploader("Choose image files", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+
+# Ensure files are uploaded before showing the button
+if uploaded_files:
+    if st.button("Go"):
+        all_followers = []
+
         for uploaded_file in uploaded_files:
             # Open and display each image
             image = Image.open(uploaded_file)
@@ -91,5 +59,5 @@ if st.button("Go"):
                 )
         else:
             st.write("No followers found in the uploaded images.")
-    else:
-        st.write("Please upload at least one image.")
+else:
+    st.write("Please upload at least one image.")
