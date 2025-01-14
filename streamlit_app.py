@@ -13,17 +13,11 @@ def preprocess_image(image):
     image = enhancer.enhance(2.0)
     return image
 
-
 def extract_followers(text):
     """Extract follower information from the text."""
     followers = []
     lines = text.split('\n')
-    debug_lines = []  # Collect lines for debugging
-
     for line in lines:
-        # Add current line to debugging
-        debug_lines.append(f"Processing line: {line}")
-
         # Skip email addresses explicitly
         if re.search(r"[^@\s]+@[^@\s]+\.[^@\s]+", line):
             continue  # Skip email addresses
@@ -31,23 +25,10 @@ def extract_followers(text):
         # Match valid Twitter handles
         matches = re.findall(r"@(?:[A-Za-z0-9_]+)", line)  # Handles starting with @
         if matches:
-            debug_lines.append(f"Raw matches: {matches}")  # Debug: Show raw matches
             followers.extend(matches)  # Add all matches in the line
 
     # Filter out handles less than 4 characters, @gmailcom, and handles ending with bskysocial
-    followers = [
-        handle for handle in followers
-        if len(handle) >= 4
-        and handle.lower() != "@gmailcom"
-        and not handle.lower().endswith("bskysocial")
-    ]
-    debug_lines.append(f"Filtered followers: {followers}")  # Debug: Show filtered results
-
-    # Display debugging information in Streamlit
-    st.write("### Debugging Information")
-    for debug_line in debug_lines:
-        st.write(debug_line)
-
+    followers = [handle for handle in followers if len(handle) >= 4 and handle.lower() != "@gmailcom" and not handle.lower().endswith("bskysocial")]
     return followers
 
 
