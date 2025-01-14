@@ -18,6 +18,9 @@ def extract_followers(text):
     followers = []
     lines = text.split('\n')
     for line in lines:
+        # Log the current line for debugging
+        print(f"Processing line: {line}")
+
         # Skip email addresses explicitly
         if re.search(r"[^@\s]+@[^@\s]+\.[^@\s]+", line):
             continue  # Skip email addresses
@@ -25,11 +28,19 @@ def extract_followers(text):
         # Match valid Twitter handles
         matches = re.findall(r"@(?:[A-Za-z0-9_]+)", line)  # Handles starting with @
         if matches:
+            print(f"Raw matches: {matches}")  # Debug: Show raw matches
             followers.extend(matches)  # Add all matches in the line
 
     # Filter out handles less than 4 characters, @gmailcom, and handles ending with bskysocial
-    followers = [handle for handle in followers if len(handle) >= 4 and handle.lower() != "@gmailcom" and not handle.lower().endswith("bskysocial")]
+    followers = [
+        handle for handle in followers
+        if len(handle) >= 4
+        and handle.lower() != "@gmailcom"
+        and not handle.lower().endswith("bskysocial")
+    ]
+    print(f"Filtered followers: {followers}")  # Debug: Show filtered results
     return followers
+
 
 def save_to_file(followers):
     """Save the list of followers to a text file."""
